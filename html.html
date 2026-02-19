@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>MSPaintTube</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;background:#222;color:#fff;font-family:sans-serif;touch-action:none}
+#top{background:#333;padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+canvas{background:#fff;display:block;cursor:crosshair;width:100%;height:calc(100vh - 60px);touch-action:none}
+#info{margin-left:auto;font-weight:bold}
+</style>
+</head>
+<body>
+<div id="top">
+<b>🎨 MSPaintTube</b>
+<input id="nick" placeholder="username">
+<input type="color" id="color" value="#000000">
+<input type="range" id="size" min="1" max="20" value="4">
+<input id="room" placeholder="room" value="public">
+<button onclick="setRoom()">Join</button>
+<span id="status">offline</span>
+<div id="info">Lines: 0</div>
+</div>
+<canvas id="c"></canvas>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDJLidimuw6qFX1-22XKt8k96_RioQMx20",
+  authDomain: "mspainttube.firebaseapp.com",
+  databaseURL: "https://mspainttube-default-rtdb.firebaseio.com",
+  projectId: "mspainttube",
+  storageBucket: "mspainttube.firebasestorage.app",
+  messagingSenderId: "1029050665830",
+  appId: "1:1029050665830:web:b98c1597d54352a51d16a7"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const color = document.getElementById('color');
+const size = document.getElementById('size');
+const status = document.getElementById('status');
+const info = document.getElementById('info');
+
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - document.getElementById('top').offsetHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+let roomRef = null;
+let drawing=false, last={};
+let lineCount = 0;
+
+function setRoom(){
+  const room = document.getElementById('room').value || 'public';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  lineCount = 0;
+  updateInfo();
+
+  if(roomRef) roomRef.off();
+  roomRef = db.ref('rooms/'+room+'/lines');
+
+  roomRef.on('child_added', snap => {
+    draw(snap.val());
+    lineCount++;
+    updateInfo();
+  });
+
+  status.textContent = 'online: '+room;
+}
+
+function updateInfo(){
+  info.textContent = 'Линий: ' + lineCount;
+}
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  if(e.touches){
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    };
+  }
+  return { x: e.offsetX, y: e.offsetY };
+}
+
+function startDraw(e){ if(!roomRef) return; drawing=true; last=getPos(e); }
+function endDraw(){ drawing=false; }
+function moveDraw(e){
+  if(!drawing || !roomRef) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  const data={x0:last.x,y0:last.y,x1:pos.x,y1:pos.y,color:color.value,size:size.value};
+  roomRef.push(data);
+  draw(data);
+  last=pos;
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('mousemove', moveDraw);
+
+canvas.addEventListener('touchstart', startDraw);
+canvas.addEventListener('touchend', endDraw);
+canvas.addEventListener('touchmove', moveDraw);
+
+function draw(d){
+  ctx.strokeStyle=d.color;
+  ctx.lineWidth=d.size;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(d.x0,d.y0);
+  ctx.lineTo(d.x1,d.y1);
+  ctx.stroke();
+}
+</script>
+</body>
+</html>
