@@ -1,124 +1,235 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>MSPaintTube</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{margin:0;background:#222;color:#fff;font-family:sans-serif;touch-action:none}
-#top{background:#333;padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-canvas{background:#fff;display:block;cursor:crosshair;width:100%;height:calc(100vh - 60px);touch-action:none}
-#info{margin-left:auto;font-weight:bold}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Offline - Site Closed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f0c1f 0%, #1a1b2f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Live indicator */
+        .live-badge {
+            display: inline-block;
+            background: rgba(255, 75, 75, 0.15);
+            border: 2px solid #ff4b4b;
+            border-radius: 50px;
+            padding: 8px 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(255, 75, 75, 0.3);
+        }
+
+        .live-badge .dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #ff4b4b;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .live-badge .text {
+            color: #ff4b4b;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* Main icon */
+        .offline-icon {
+            font-size: 120px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 30px rgba(138, 43, 226, 0.5));
+            animation: float 3s infinite ease-in-out;
+        }
+
+        /* Main title */
+        h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff 0%, #b794f4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* Reason - this is the main message you requested */
+        .reason {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 15px 35px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 60px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .reason .highlight {
+            color: #ff6b6b;
+            font-weight: 700;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 0 5px;
+        }
+
+        /* Description */
+        .description {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            margin: 30px auto 40px;
+            max-width: 500px;
+            line-height: 1.7;
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #c0c0e0;
+            font-size: 1.1rem;
+        }
+
+        .status-item .offline-text {
+            color: #ff6b6b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-item .check-icon {
+            color: #4caf50;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Wave effect */
+        .wave {
+            position: relative;
+            display: inline-block;
+        }
+
+        .wave::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            border-radius: 50%;
+            animation: wave 2s infinite;
+        }
+
+        @keyframes wave {
+            0% {
+                width: 120px;
+                height: 120px;
+                opacity: 1;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+            }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 3rem; }
+            .reason { font-size: 1.6rem; }
+            .offline-icon { font-size: 80px; }
+        }
+    </style>
 </head>
 <body>
-<div id="top">
-<b>🎨 MSPaintTube</b>
-<input id="nick" placeholder="username">
-<input type="color" id="color" value="#000000">
-<input type="range" id="size" min="1" max="20" value="4">
-<input id="room" placeholder="room" value="public">
-<button onclick="setRoom()">Join</button>
-<span id="status">offline</span>
-<div id="info">Lines: 0</div>
-</div>
-<canvas id="c"></canvas>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDJLidimuw6qFX1-22XKt8k96_RioQMx20",
-  authDomain: "mspainttube.firebaseapp.com",
-  databaseURL: "https://mspainttube-default-rtdb.firebaseio.com",
-  projectId: "mspainttube",
-  storageBucket: "mspainttube.firebasestorage.app",
-  messagingSenderId: "1029050665830",
-  appId: "1:1029050665830:web:b98c1597d54352a51d16a7"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    <div class="container">
+        <!-- Live status badge -->
+        <div class="live-badge">
+            <span class="dot"></span>
+            <span class="text">OFFLINE</span>
+        </div>
 
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const color = document.getElementById('color');
-const size = document.getElementById('size');
-const status = document.getElementById('status');
-const info = document.getElementById('info');
+        <!-- Main icon with wave effect -->
+        <div class="wave">
+            <div class="offline-icon">
+                📡
+            </div>
+        </div>
 
-function resizeCanvas(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight - document.getElementById('top').offsetHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+        <!-- Main title -->
+        <h1>STREAM OFFLINE</h1>
+        
+        <!-- THE REASON YOU REQUESTED - prominently displayed -->
+        <div class="reason">
+            <span class="highlight">"stream isn't on live"</span>
+        </div>
 
-let roomRef = null;
-let drawing=false, last={};
-let lineCount = 0;
+        <!-- Additional context -->
+        <p class="description">
+            The broadcast has ended or hasn't started yet.<br>
+            Check back later when the stream goes live.
+        </p>
 
-function setRoom(){
-  const room = document.getElementById('room').value || 'public';
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  lineCount = 0;
-  updateInfo();
+        <!-- Status information -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span>🔴 Stream status:</span>
+                <span class="offline-text">● NOT LIVE</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.9rem; color: #8888aa;">
+                Last checked: Just now • No signal detected
+            </div>
+        </div>
 
-  if(roomRef) roomRef.off();
-  roomRef = db.ref('rooms/'+room+'/lines');
-
-  roomRef.on('child_added', snap => {
-    draw(snap.val());
-    lineCount++;
-    updateInfo();
-  });
-
-  status.textContent = 'online: '+room;
-}
-
-function updateInfo(){
-  info.textContent = 'Линий: ' + lineCount;
-}
-
-function getPos(e){
-  const rect = canvas.getBoundingClientRect();
-  if(e.touches){
-    return {
-      x: e.touches[0].clientX - rect.left,
-      y: e.touches[0].clientY - rect.top
-    };
-  }
-  return { x: e.offsetX, y: e.offsetY };
-}
-
-function startDraw(e){ if(!roomRef) return; drawing=true; last=getPos(e); }
-function endDraw(){ drawing=false; }
-function moveDraw(e){
-  if(!drawing || !roomRef) return;
-  e.preventDefault();
-  const pos = getPos(e);
-  const data={x0:last.x,y0:last.y,x1:pos.x,y1:pos.y,color:color.value,size:size.value};
-  roomRef.push(data);
-  draw(data);
-  last=pos;
-}
-
-canvas.addEventListener('mousedown', startDraw);
-canvas.addEventListener('mouseup', endDraw);
-canvas.addEventListener('mouseleave', endDraw);
-canvas.addEventListener('mousemove', moveDraw);
-
-canvas.addEventListener('touchstart', startDraw);
-canvas.addEventListener('touchend', endDraw);
-canvas.addEventListener('touchmove', moveDraw);
-
-function draw(d){
-  ctx.strokeStyle=d.color;
-  ctx.lineWidth=d.size;
-  ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(d.x0,d.y0);
-  ctx.lineTo(d.x1,d.y1);
-  ctx.stroke();
-}
-</script>
+        <!-- Small footer note -->
+        <div style="margin-top: 40px; color: #555577; font-size: 0.8rem;">
+            ⚡ Stream isn't on live • Site access temporarily restricted
+        </div>
+    </div>
 </body>
 </html>
